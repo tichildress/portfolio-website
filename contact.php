@@ -1,65 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    header("Location: index.html");
+    exit;
+}
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Contact | Tanner Childress</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-</head>
+function clean_input($value) {
+    return trim(stripslashes($value));
+}
 
-<body>
-    <header>
-        <img src="/images/TC_Logo.png" alt="Logo">
-        <nav class="nav-links">
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="projects.html">Projects</a></li>
-                <li><a href="contact.html" class="active">Contact</a></li>
-            </ul>
-        </nav>
+$name = clean_input($_POST["name"] ?? "");
+$company = clean_input($_POST["company"] ?? "");
+$email = clean_input($_POST["email"] ?? "");
+$phone = clean_input($_POST["phone"] ?? "");
+$subject = clean_input($_POST["subject"] ?? "");
+$message = clean_input($_POST["message"] ?? "");
 
-        <div class="menu-toggle" id="menu-toggle">
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-        </div>
+if (
+    $name === "" ||
+    $email === "" ||
+    $subject === "" ||
+    $message === ""
+) {
+    die("Please fill in all required fields.");
+}
 
-        <nav class="mobile-menu" id="mobile-menu">
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="projects.html">Projects</a></li>
-                <li><a href="contact.php">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    die("Please enter a valid email address.");
+}
 
-    <section id="contact">
-        <h2 class="section-title">Get in Touch</h2>
+$to = "childress721@gmail.com";
+$email_subject = "Portfolio Contact: " . $subject;
 
-        <?php if (isset($_GET['success'])): ?>
-        <p class="form-success">✅ Your message has been sent successfully!</p>
-        <?php elseif (isset($_GET['error'])): ?>
-        <p class="form-error">❌ Something went wrong. Please try again.</p>
-        <?php endif; ?>
+$email_body  = "You received a new message from your portfolio contact form.\n\n";
+$email_body .= "Name: " . $name . "\n";
+$email_body .= "Company: " . $company . "\n";
+$email_body .= "Email: " . $email . "\n";
+$email_body .= "Phone: " . $phone . "\n\n";
+$email_body .= "Message:\n" . $message . "\n";
 
-        <form class="contact-form" action="send_mail.php" method="POST">
-            <input type="text" name="name" placeholder="Your Name" required>
-            <input type="email" name="email" placeholder="Your Email" required>
-            <textarea name="message" placeholder="Your Message" rows="5" required></textarea>
-            <button type="submit" class="btn">Send Message</button>
-        </form>
-    </section>
+$headers  = "From: noreply@" . $_SERVER["SERVER_NAME"] . "\r\n";
+$headers .= "Reply-To: " . $email . "\r\n";
+$headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
 
-
-    <footer>
-        © <span id="year"></span> Tanner Childress. All Rights Reserved.
-    </footer>
-
-    <script src="script.js"></script>
-</body>
-
-</html>
+if (mail($to, $email_subject, $email_body, $headers)) {
+    header("Location: index.html?sent=1");
+    exit;
+} else {
+    echo "Sorry, your message could not be sent. Please try again later.";
+}
+?>
